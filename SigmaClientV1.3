@@ -1,0 +1,260 @@
+// ==UserScript==
+// @name         Sigma Client v1.3
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  GUI for scenexe2.io
+// @match        *://*.scenexe2.io/*
+// @grant        GM_addStyle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Add CSS styles
+    GM_addStyle(`
+        .sigma-gui {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff8c00;
+            border-radius: 5px;
+            padding: 15px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 9999;
+            min-width: 300px;
+            display: none;
+        }
+
+        .sigma-header {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .sigma-button {
+            background: #ff8c00;
+            border: 1px solid #ffa500;
+            color: white;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .sigma-button:hover {
+            background: #ffa500;
+        }
+
+        .sigma-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        .status-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff8c00;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            display: none;
+            z-index: 10000;
+        }
+
+        /* Aim Helper line */
+        .aim-helper-line {
+            position: absolute;
+            height: 2px;
+            background-color: orange;
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        /* Gun position styling */
+        .gun {
+            position: absolute;
+            background-color: red;
+            width: 30px; /* Width of the red square */
+            height: 30px; /* Height of the red square */
+            z-index: 1000;
+        }
+    `);
+
+    // Create GUI
+    const gui = document.createElement('div');
+    gui.className = 'sigma-gui';
+    gui.innerHTML = `
+        <div class="sigma-header">Sigma Client v1</div>
+        <span class="sigma-close">X</span>
+        <button class="sigma-button" id="gModeButton">GMode</button>
+        <button class="sigma-button" id="aimHelperButton">Aim Helper</button>
+        <button class="sigma-button" id="noDarkButton">NoDark</button>
+    `;
+    document.body.appendChild(gui);
+
+    // Create status popup
+    const statusPopup = document.createElement('div');
+    statusPopup.className = 'status-popup';
+    document.body.appendChild(statusPopup);
+
+    // Show status message
+    function showStatus(message, duration = 2000) {
+        statusPopup.textContent = message;
+        statusPopup.style.display = 'block';
+        setTimeout(() => {
+            statusPopup.style.display = 'none';
+        }, duration);
+    }
+
+    let gModeEnabled = false;
+    let aimHelperEnabled = false;
+    let aimHelperLine = null;
+    let gunElement = null;
+    let noDarkEnabled = false;
+
+    // Event Listeners
+    document.addEventListener('keydown', function(e) {
+        if (e.key.toLowerCase() === 'z') {  // Changed from 'v' to 'z'
+            gui.style.display = gui.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+
+    document.querySelector('.sigma-close').addEventListener('click', function() {
+        gui.style.display = 'none';
+    });
+
+    // GMode Button
+    document.getElementById('gModeButton').addEventListener('click', function() {
+        gModeEnabled = !gModeEnabled;
+        showStatus(`GMode: ${gModeEnabled ? 'Enabled' : 'Disabled'}`);
+        this.style.background = gModeEnabled ? '#ffa500' : '#ff8c00';
+    });
+
+    // Aim Helper Button
+    document.getElementById('aimHelperButton').addEventListener('click', function() {
+        aimHelperEnabled = !aimHelperEnabled;
+        showStatus(`Aim Helper: ${aimHelperEnabled ? 'Enabled' : 'Disabled'}`);
+        this.style.background = aimHelperEnabled ? '#ffa500' : '#ff8c00';
+
+        // Toggle the Aim Helper line visibility
+        if (aimHelperEnabled) {
+            createAimHelperLine();
+        } else {
+            if (aimHelperLine) {
+                aimHelperLine.style.display = 'none'; // Hide the line
+            }
+            // Hide the gun (red box) when Aim Helper is disabled
+            if (gunElement) {
+                gunElement.style.display = 'none'; // Hide the gun
+            }
+        }
+    });
+
+    // NoDark Button
+    document.getElementById('noDarkButton').addEventListener('click', function() {
+        noDarkEnabled = !noDarkEnabled;
+        showStatus(`NoDark: ${noDarkEnabled ? 'Enabled' : 'Disabled'}`);
+
+        // Toggle the NoDark functionality (example: disable dark background or adjust styles)
+        if (noDarkEnabled) {
+            document.body.style.backgroundColor = "#fff";  // Change background color to light
+            document.body.style.color = "#000";  // Change text color to dark
+        } else {
+            document.body.style.backgroundColor = "";  // Reset background
+            document.body.style.color = "";  // Reset text color
+        }
+    });
+
+    // Prevent GUI from closing when clicking inside it
+    gui.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+
+    // Close GUI when clicking outside
+    document.addEventListener('click', function(e) {
+        if (gui.style.display === 'block' && !gui.contains(e.target)) {
+            gui.style.display = 'none';
+        }
+    });
+
+    // Create and position the Aim Helper line
+    function createAimHelperLine() {
+        if (!aimHelperLine) {
+            aimHelperLine = document.createElement('div');
+            aimHelperLine.className = 'aim-helper-line';
+            document.body.appendChild(aimHelperLine);
+        }
+
+        // Ensure the line is visible
+        aimHelperLine.style.display = 'block';
+
+        // Listen for mouse movement to update the line position
+        document.addEventListener('mousemove', updateAimHelperLine);
+
+        // Set the initial line to be pointing to the right (starting position)
+        updateAimHelperLine({ clientX: window.innerWidth, clientY: window.innerHeight });
+    }
+
+    // Update the line to follow the mouse from the gun's position
+    function updateAimHelperLine(event) {
+        if (aimHelperLine && gunElement) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            // Get the player's gun position
+            const gunPosition = getPlayerGunPosition();
+
+            // Position the gun element based on mouse X position
+            gunElement.style.left = `${gunPosition.x}px`;
+            gunElement.style.top = `${gunPosition.y}px`;
+
+            // Set the line's position starting from the gun's position
+            aimHelperLine.style.left = `${gunPosition.x + gunElement.offsetWidth / 2}px`;
+            aimHelperLine.style.top = `${gunPosition.y + gunElement.offsetHeight / 2}px`;
+
+            // Calculate the line length and rotation angle
+            const deltaX = mouseX - gunPosition.x;
+            const deltaY = mouseY - gunPosition.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+            // Set the line's width and rotation
+            aimHelperLine.style.width = `${distance}px`;
+            aimHelperLine.style.transform = `rotate(${angle}deg)`;
+        }
+    }
+
+    // Function to get the player's gun position
+    function getPlayerGunPosition() {
+        return {
+            x: window.innerWidth / 2 - 15,
+            y: window.innerHeight / 2 - 15
+        };
+    }
+
+    // Create the gun element on the screen
+    function createGunElement() {
+        if (!gunElement) {
+            gunElement = document.createElement('div');
+            gunElement.className = 'gun';
+            document.body.appendChild(gunElement);
+        }
+    }
+
+    // Initialize the gun element
+    createGunElement();
+
+})();
