@@ -9,3 +9,5 @@ FOR NEW UPDATES: Use the same principal except use the lastest version.
 THE LATEST VERSION: Version 1.3
 
 REMEMBER THAT EVERYTHING MIGHT NOT WORK, THIS IS STILL IN DEVELOPMENT!
+
+Tracers are currently being worked on and NoDark still dosent work, This will be fixed soon
