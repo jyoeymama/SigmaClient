@@ -1,0 +1,446 @@
+// ==UserScript==
+// @name         Sigma Client v1.5
+// @namespace    http://tampermonkey.net/
+// @version      1.5
+// @description  GUI for scenexe2.io
+// @match        *://*.scenexe2.io/*
+// @grant        GM_addStyle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Add CSS styles
+    GM_addStyle(`
+        .sigma-gui {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff8c00;
+            border-radius: 5px;
+            padding: 15px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 9999;
+            min-width: 300px;
+            display: none;
+        }
+
+        .sigma-header {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .sigma-button {
+            background: #ff8c00;
+            border: 1px solid #ffa500;
+            color: white;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .sigma-button:hover {
+            background: #ffa500;
+        }
+
+        .sigma-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        .status-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff8c00;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            display: none;
+            z-index: 10000;
+        }
+
+        .ping-display, .fps-display {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #ff8c00;
+            padding: 5px 10px;
+            color: white;
+            border-radius: 3px;
+            z-index: 10000;
+        }
+
+        .fps-display {
+            top: 40px;
+        }
+
+        /* Aim Helper line */
+        .aim-helper-line {
+            position: absolute;
+            height: 2px;
+            background-color: orange;
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        /* Gun position styling */
+        .gun {
+            position: absolute;
+            background-color: red;
+            width: 30px; /* Width of the red square */
+            height: 30px; /* Height of the red square */
+            z-index: 1000;
+        }
+
+        /* Tracer styling */
+        .tracer-line {
+            position: absolute;
+            height: 2px;
+            background-color: orange;
+            z-index: 1000;
+        }
+    `);
+
+    // Create GUI
+    const gui = document.createElement('div');
+    gui.className = 'sigma-gui';
+    gui.innerHTML = `
+        <div class="sigma-header">Sigma Client V1.5</div>
+        <span class="sigma-close">X</span>
+        <button class="sigma-button" id="tracersButton">Tracers</button>
+        <button class="sigma-button" id="aimHelperButton">Aim Helper</button>
+        <button class="sigma-button" id="noDarkButton">NoDark</button>
+        <button class="sigma-button" id="pingButton">Show Ping</button>
+        <button class="sigma-button" id="fpsButton">Show FPS</button>
+        <button class="sigma-button" id="transparencyButton">Adjust Transparency</button>
+    `;
+    document.body.appendChild(gui);
+
+    // Create status popup
+    const statusPopup = document.createElement('div');
+    statusPopup.className = 'status-popup';
+    document.body.appendChild(statusPopup);
+
+    // Create ping display
+    const pingDisplay = document.createElement('div');
+    pingDisplay.className = 'ping-display';
+    pingDisplay.style.display = 'none';
+    document.body.appendChild(pingDisplay);
+
+    // Create FPS display
+    const fpsDisplay = document.createElement('div');
+    fpsDisplay.className = 'fps-display';
+    fpsDisplay.style.display = 'none';
+    document.body.appendChild(fpsDisplay);
+
+    // Show status message
+    function showStatus(message, duration = 2000) {
+        statusPopup.textContent = message;
+        statusPopup.style.display = 'block';
+        setTimeout(() => {
+            statusPopup.style.display = 'none';
+        }, duration);
+    }
+
+    let tracersEnabled = false;
+    let aimHelperEnabled = false;
+    let aimHelperLine = null;
+    let gunElement = null;
+    let noDarkEnabled = false;
+    let tracers = []; // Store tracer lines
+    let pingVisible = false;
+    let fpsVisible = false;
+    let transparency = 0.8;
+
+    // Event Listeners
+    document.addEventListener('keydown', function(e) {
+        if (e.key.toLowerCase() === 'z') {
+            gui.style.display = gui.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+
+    document.querySelector('.sigma-close').addEventListener('click', function() {
+        gui.style.display = 'none';
+    });
+
+    // Tracers Button
+    document.getElementById('tracersButton').addEventListener('click', function() {
+        tracersEnabled = !tracersEnabled;
+        showStatus(`Tracers: ${tracersEnabled ? 'Enabled' : 'Disabled'}`);
+        this.style.background = tracersEnabled ? '#ffa500' : '#ff8c00';
+
+        if (tracersEnabled) {
+            // Start tracking players and draw tracers
+            startTrackingPlayers();
+        } else {
+            // Stop tracking players and remove tracers
+            removeTracers();
+        }
+    });
+
+    // Start tracking players and create tracers
+    function startTrackingPlayers() {
+        // Get visible players on screen (Replace with your actual logic for getting visible players)
+        const visiblePlayers = getVisiblePlayers();
+
+        visiblePlayers.forEach(player => {
+            const tracerLine = document.createElement('div');
+            tracerLine.className = 'tracer-line';
+            document.body.appendChild(tracerLine);
+
+            // Store tracer line for later updates
+            tracers.push({
+                playerId: player.id,
+                element: tracerLine,
+                updatePosition: () => updateTracerPosition(player, tracerLine)
+            });
+        });
+
+        // Update tracers position every frame
+        requestAnimationFrame(updateTracers);
+    }
+
+    // Remove all tracer lines
+    function removeTracers() {
+        tracers.forEach(tracer => {
+            tracer.element.remove();
+        });
+        tracers = [];
+    }
+
+    // Update tracers position
+    function updateTracers() {
+        tracers.forEach(tracer => {
+            const player = getPlayerById(tracer.playerId);
+            if (player) {
+                tracer.updatePosition();
+            }
+        });
+
+        if (tracersEnabled) {
+            requestAnimationFrame(updateTracers);
+        }
+    }
+
+    // Update the tracer line to point towards the player's position
+    function updateTracerPosition(player, tracerLine) {
+        const gunPosition = getPlayerGunPosition(); // Your player's gun position
+        const playerPosition = getPlayerPosition(player); // Player's position
+
+        // Calculate the delta between gun and player positions
+        const deltaX = playerPosition.x - gunPosition.x;
+        const deltaY = playerPosition.y - gunPosition.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+        // Set the tracer's width (distance) and angle (rotation)
+        tracerLine.style.width = `${distance}px`;
+        tracerLine.style.transform = `rotate(${angle}deg)`;
+        tracerLine.style.left = `${gunPosition.x}px`;
+        tracerLine.style.top = `${gunPosition.y}px`;
+    }
+
+    // Dummy function to get visible players (replace with actual logic)
+    function getVisiblePlayers() {
+        // This is just a dummy list, replace it with actual logic to get players visible on the screen
+        return [
+            { id: 1, x: 100, y: 200 },
+            { id: 2, x: 300, y: 400 }
+        ];
+    }
+
+    // Dummy function to get player position (replace with actual logic)
+    function getPlayerPosition(player) {
+        return { x: player.x, y: player.y };
+    }
+
+    // Dummy function to get player by ID (replace with actual logic)
+    function getPlayerById(id) {
+        return { id: id, x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight };
+    }
+
+    // Function to get the player's gun position (replace with actual logic)
+    function getPlayerGunPosition() {
+        return {
+            x: window.innerWidth / 2 - 15,
+            y: window.innerHeight / 2 - 15
+        };
+    }
+
+    // Aim Helper Button
+    document.getElementById('aimHelperButton').addEventListener('click', function() {
+        aimHelperEnabled = !aimHelperEnabled;
+        showStatus(`Aim Helper: ${aimHelperEnabled ? 'Enabled' : 'Disabled'}`);
+        this.style.background = aimHelperEnabled ? '#ffa500' : '#ff8c00';
+
+        // Toggle the Aim Helper line visibility
+        if (aimHelperEnabled) {
+            createAimHelperLine();
+        } else {
+            if (aimHelperLine) {
+                aimHelperLine.style.display = 'none';
+            }
+            if (gunElement) {
+                gunElement.style.display = 'none';
+            }
+        }
+    });
+
+    // NoDark Button
+    document.getElementById('noDarkButton').addEventListener('click', function() {
+        noDarkEnabled = !noDarkEnabled;
+        showStatus(`NoDark: ${noDarkEnabled ? 'Enabled' : 'Disabled'}`);
+
+        if (noDarkEnabled) {
+            document.body.style.backgroundColor = "#fff";
+            document.body.style.color = "#000";
+        } else {
+            document.body.style.backgroundColor = "";
+            document.body.style.color = "";
+        }
+    });
+
+    // Show Ping Button
+    document.getElementById('pingButton').addEventListener('click', function() {
+        pingVisible = !pingVisible;
+        showStatus(`Ping: ${pingVisible ? 'Visible' : 'Hidden'}`);
+        pingDisplay.style.display = pingVisible ? 'block' : 'none';
+
+        if (pingVisible) {
+            updatePing();
+        }
+    });
+
+    // Show FPS Button
+    document.getElementById('fpsButton').addEventListener('click', function() {
+        fpsVisible = !fpsVisible;
+        showStatus(`FPS: ${fpsVisible ? 'Visible' : 'Hidden'}`);
+        fpsDisplay.style.display = fpsVisible ? 'block' : 'none';
+
+        if (fpsVisible) {
+            updateFPS();
+        }
+    });
+
+    // Adjust Transparency Button
+    document.getElementById('transparencyButton').addEventListener('click', function() {
+        transparency = (transparency === 0.8) ? 0.5 : 0.8;
+        showStatus(`Transparency: ${transparency === 0.8 ? 'High' : 'Low'}`);
+        gui.style.backgroundColor = `rgba(0, 0, 0, ${transparency})`;
+    });
+
+    // Prevent GUI from closing when clicking inside it
+    gui.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+
+    // Close GUI when clicking outside
+    document.addEventListener('click', function(e) {
+        if (gui.style.display === 'block' && !gui.contains(e.target)) {
+            gui.style.display = 'none';
+        }
+    });
+
+    // Create and position the Aim Helper line
+    function createAimHelperLine() {
+        if (!aimHelperLine) {
+            aimHelperLine = document.createElement('div');
+            aimHelperLine.className = 'aim-helper-line';
+            document.body.appendChild(aimHelperLine);
+        }
+
+        // Ensure the line is visible
+        aimHelperLine.style.display = 'block';
+
+        // Listen for mouse movement to update the line position
+        document.addEventListener('mousemove', updateAimHelperLine);
+
+        // Set the initial line to be pointing to the right (starting position)
+        updateAimHelperLine({ clientX: window.innerWidth, clientY: window.innerHeight });
+    }
+
+    // Update the line to follow the mouse from the gun's position
+    function updateAimHelperLine(event) {
+        if (aimHelperLine && gunElement) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            // Get the player's gun position
+            const gunPosition = getPlayerGunPosition();
+
+            // Position the gun element based on mouse X position
+            gunElement.style.left = `${gunPosition.x}px`;
+            gunElement.style.top = `${gunPosition.y}px`;
+
+            // Set the line's position starting from the gun's position
+            aimHelperLine.style.left = `${gunPosition.x + gunElement.offsetWidth / 2}px`;
+            aimHelperLine.style.top = `${gunPosition.y + gunElement.offsetHeight / 2}px`;
+
+            // Calculate the line length and rotation angle
+            const deltaX = mouseX - gunPosition.x;
+            const deltaY = mouseY - gunPosition.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+            // Set the line's width and rotation
+            aimHelperLine.style.width = `${distance}px`;
+            aimHelperLine.style.transform = `rotate(${angle}deg)`;
+        }
+    }
+
+    // Function to get the player's gun position
+    function getPlayerGunPosition() {
+        return {
+            x: window.innerWidth / 2 - 15,
+            y: window.innerHeight / 2 - 15
+        };
+    }
+
+    // Create the gun element on the screen
+    function createGunElement() {
+        if (!gunElement) {
+            gunElement = document.createElement('div');
+            gunElement.className = 'gun';
+            document.body.appendChild(gunElement);
+        }
+    }
+
+    // Initialize the gun element
+    createGunElement();
+
+    // Update Ping
+    function updatePing() {
+        if (pingVisible) {
+            // Replace with your logic to get ping
+            const ping = Math.floor(Math.random() * 100);
+            pingDisplay.textContent = `Ping: ${ping}ms`;
+            setTimeout(updatePing, 1000);
+        }
+    }
+
+    // Update FPS
+    function updateFPS() {
+        if (fpsVisible) {
+            // Replace with your logic to get FPS
+            const fps = Math.floor(Math.random() * 60) + 1;
+            fpsDisplay.textContent = `FPS: ${fps}`;
+            requestAnimationFrame(updateFPS);
+        }
+    }
+})();
