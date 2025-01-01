@@ -6,6 +6,6 @@ IF you have any issues then go back to my github and report it in the issues tab
 
 FOR NEW UPDATES: Use the same principal except use the lastest version.
 
-THE LATEST VERSION: Version 1.2
+THE LATEST VERSION: Version 1.3
 
 REMEMBER THAT EVERYTHING MIGHT NOT WORK, THIS IS STILL IN DEVELOPMENT!
