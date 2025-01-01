@@ -6,10 +6,12 @@ IF you have any issues then go back to my github and report it in the issues tab
 
 FOR NEW UPDATES: Use the same principal except use the lastest version.
 
-THE LATEST VERSION: Version 1.3
+THE LATEST VERSION: Version 1.6
 
 REMEMBER THAT EVERYTHING MIGHT NOT WORK, THIS IS STILL IN DEVELOPMENT!
 
-Tracers are currently being worked on and NoDark still dosent work, This will be fixed soon
+Tracers are currently being worked on and NoDark still dosent work as well as a few other things, This will be fixed soon.
 
-to all my users, I LOVE YOU AND THANK YOU!
+to all my users, THANK YOU!
+
+Please make sure to suggest anything to me 
