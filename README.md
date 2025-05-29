@@ -10,6 +10,10 @@ THE LATEST VERSION: Version 1.6
 
 REMEMBER THAT EVERYTHING MIGHT NOT WORK, THIS IS STILL IN DEVELOPMENT!
 
+Multiboxing is also being added to Sigma Client V1.7
+
+A translator is also being added to Sigma Client V1.7 for those whose native language is not english. 
+
 Tracers are currently being worked on and NoDark still dosent work as well as a few other things, This will be fixed soon.
 
 to all my users, THANK YOU!
