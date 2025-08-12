@@ -6,16 +6,14 @@ IF you have any issues then go back to my github and report it in the issues tab
 
 FOR NEW UPDATES: Use the same principal except use the lastest version.
 
-THE LATEST VERSION: Version 1.6
+THE LATEST VERSION: Version 1.8
 
 REMEMBER THAT EVERYTHING MIGHT NOT WORK, THIS IS STILL IN DEVELOPMENT!
 
-Multiboxing is also being added to Sigma Client V1.7
-
-A translator is also being added to Sigma Client V1.7 for those whose native language is not english. 
+Multiboxing is also being worked on that will make controlling multiple instances easier.
 
 Tracers are currently being worked on and NoDark still dosent work as well as a few other things, This will be fixed soon.
 
 to all my users, THANK YOU!
 
-Please make sure to suggest anything to me 
+Please make sure to suggest anything to me, Please email me at: jyomama28@gmail.com
