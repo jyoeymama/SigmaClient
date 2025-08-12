@@ -7,6 +7,8 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
+// PLEASE NOTE SOME THINGS MIGHT NOT WORK, THIS IS A WORK IN PROGRESS!
+
 (function() {
     'use strict';
     const DEFAULT_SETTINGS = {
@@ -990,7 +992,4 @@
         saveSettings(settings);
     });
 
-    /***********************
-     * End of script
-     ***********************/
 })();
