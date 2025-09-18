@@ -25,11 +25,11 @@
         fontSize: 14,
         buttonColor: '#ff8c00',
         buttonHoverColor: '#ffa500',
-        position: 'center', // center, top-left, top-right, bottom-left, bottom-right
-        theme: 'dark' // dark, light, neon, minimal, glass
+        position: 'center', 
+        theme: 'dark' 
     };
 
-    // Helper to load/save settings
+
     function loadSettings() {
         try {
             const raw = localStorage.getItem('sigma_gui_settings_v1');
@@ -54,7 +54,7 @@
         showStatus('Settings reset to defaults', 2000);
     }
 
-    // Apply a theme preset (mutates settings)
+
     function applyThemePreset(name) {
         switch (name) {
             case 'dark':
@@ -111,10 +111,10 @@
         showStatus(`Applied theme: ${name}`, 1200);
     }
 
-    // Load settings at start
+
     let settings = loadSettings();
 
-    // Add base CSS (we'll update many styles via JS dynamically)
+
     GM_addStyle(`
         .sigma-gui {
             position: fixed;
@@ -188,7 +188,6 @@
         .tracer-line { position: absolute; height: 2px; background-color: orange; z-index: 1000; }
     `);
 
-    // Create GUI element and children
     const gui = document.createElement('div');
     gui.className = 'sigma-gui';
     gui.setAttribute('role', 'dialog');
@@ -325,7 +324,7 @@
 
     document.body.appendChild(gui);
 
-    // status popup + ping/fps preserved
+
     const statusPopup = document.createElement('div');
     statusPopup.className = 'status-popup';
     document.body.appendChild(statusPopup);
@@ -340,7 +339,7 @@
     fpsDisplay.style.display = 'none';
     document.body.appendChild(fpsDisplay);
 
-    // preserved aim / tracer elements references
+
     let tracersEnabled = false;
     let aimHelperEnabled = false;
     let aimHelperLine = null;
@@ -351,7 +350,7 @@
     let fpsVisible = false;
     let transparency = settings.bgAlpha;
 
-    // helper: show status
+
     function showStatus(message, duration = 2000) {
         statusPopup.textContent = message;
         statusPopup.style.display = 'block';
@@ -360,17 +359,17 @@
         setTimeout(() => { statusPopup.style.display = 'none'; }, duration);
     }
 
-    // Apply settings to GUI styles
+
     function applySettings() {
-        // Title text
+
         const title = document.getElementById('sigmaTitle');
         title.textContent = settings.headerText || DEFAULT_SETTINGS.headerText;
 
-        // Update currentTheme field
+
         const currentTheme = document.getElementById('currentTheme');
         currentTheme.value = settings.theme || '';
 
-        // GUI container style
+
         gui.style.background = `rgba(${hexToRgb(settings.bgColor)}, ${settings.bgAlpha})`;
         gui.style.color = settings.textColor;
         gui.style.border = `${settings.borderWidth}px solid ${settings.borderColor || 'transparent'}`;
@@ -381,7 +380,7 @@
         gui.style.fontSize = `${settings.fontSize}px`;
         gui.style.boxShadow = (settings.theme === 'neon') ? '0 6px 30px rgba(255,0,255,0.08), 0 0 10px rgba(57,255,20,0.05)' : '0 6px 18px rgba(0,0,0,0.3)';
 
-        // Buttons style
+
         const buttons = gui.querySelectorAll('.sigma-button');
         buttons.forEach(btn => {
             btn.style.background = settings.buttonColor;
@@ -389,18 +388,16 @@
             btn.style.border = `1px solid ${settings.borderColor}`;
         });
 
-        // Hover effect (inlined)
+
         addButtonHoverStyles(settings.buttonHoverColor);
 
-        // Positioning
         placeGui(settings.position);
 
-        // Update resizer visibility (small for minimal)
         const resizer = document.getElementById('sigmaResizer');
         resizer.style.display = settings.theme === 'minimal' ? 'none' : 'block';
     }
 
-    // Utility: add hover styles via a small dynamic <style>
+
     let hoverStyleEl = null;
     function addButtonHoverStyles(hoverColor) {
         if (hoverStyleEl) hoverStyleEl.remove();
@@ -411,9 +408,8 @@
         document.head.appendChild(hoverStyleEl);
     }
 
-    // Place GUI based on chosen position setting
     function placeGui(pos) {
-        // reset transform and positioning
+
         gui.style.top = ''; gui.style.left = ''; gui.style.right = ''; gui.style.bottom = '';
         gui.style.transform = '';
 
@@ -446,9 +442,9 @@
         }
     }
 
-    // Utilities
+
     function hexToRgb(hex) {
-        // accept #RRGGBB or #RGB
+
         const h = hex.replace('#', '');
         if (h.length === 3) {
             const r = parseInt(h[0] + h[0], 16);
@@ -464,7 +460,7 @@
     }
 
     function deriveContrastColor(hex) {
-        // quick luminance test: return black or white
+
         const h = hex.replace('#', '');
         const r = parseInt(h.substring(0,2), 16);
         const g = parseInt(h.substring(2,4), 16);
@@ -473,7 +469,7 @@
         return luminance > 0.55 ? '#000000' : '#ffffff';
     }
 
-    // Populate controls with current settings
+
     function populateControls() {
         document.getElementById('inputHeaderText').value = settings.headerText || DEFAULT_SETTINGS.headerText;
         document.getElementById('bgColor').value = settings.bgColor || DEFAULT_SETTINGS.bgColor;
@@ -497,22 +493,22 @@
         document.getElementById('currentTheme').value = settings.theme || DEFAULT_SETTINGS.theme;
     }
 
-    // Wire up customize controls
+
     function wireCustomize() {
-        // toggles
+
         document.getElementById('toggleCustomize').addEventListener('click', () => {
             const panel = document.getElementById('customizePanel');
             const hidden = panel.style.display === 'none' || panel.style.display === '';
             panel.style.display = hidden ? 'block' : 'none';
         });
 
-        // header text
+
         document.getElementById('inputHeaderText').addEventListener('input', (e) => {
             settings.headerText = e.target.value;
             applySettings();
         });
 
-        // theme preset apply
+
         document.getElementById('applyPresetBtn').addEventListener('click', () => {
             const val = document.getElementById('presetTheme').value;
             if (val) {
@@ -522,7 +518,7 @@
             }
         });
 
-        // color + range inputs
+
         document.getElementById('bgColor').addEventListener('input', (e) => {
             settings.bgColor = e.target.value;
             applySettings();
@@ -599,7 +595,7 @@
 
         document.getElementById('exportSettings').addEventListener('click', () => {
             const data = JSON.stringify(settings, null, 2);
-            // create a temporary blob and open in new tab for user to copy / save
+
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -635,22 +631,22 @@
         });
     }
 
-    // Make GUI draggable using header
+
     function makeDraggable() {
         const header = document.getElementById('sigmaHeader');
         let isDown = false;
         let startX, startY, startLeft, startTop;
 
         header.addEventListener('mousedown', (e) => {
-            // Only allow drag when GUI is in positional mode 'center' or manual (we'll always allow)
+
             isDown = true;
             startX = e.clientX;
             startY = e.clientY;
-            // store current style positions
+
             const rect = gui.getBoundingClientRect();
             startLeft = rect.left;
             startTop = rect.top;
-            // disable transform temporarily if center
+
             gui.style.transform = '';
             document.body.style.userSelect = 'none';
         });
@@ -661,16 +657,16 @@
             const dy = e.clientY - startY;
             gui.style.left = `${startLeft + dx}px`;
             gui.style.top = `${startTop + dy}px`;
-            // set position to custom so auto position doesn't override while dragging
+
             settings.position = 'custom';
-            document.getElementById('positionSelect').value = 'center'; // visual doesn't represent custom; center is default-ish
+            document.getElementById('positionSelect').value = 'center'; 
         });
 
         window.addEventListener('mouseup', () => {
             if (isDown) {
                 isDown = false;
                 document.body.style.userSelect = '';
-                // persist final top/left in settings so we can restore if desired (optional)
+
                 try {
                     settings.customLeft = gui.style.left;
                     settings.customTop = gui.style.top;
@@ -680,7 +676,7 @@
         });
     }
 
-    // Make GUI resizable via corner handle
+
     function makeResizable() {
         const resizer = document.getElementById('sigmaResizer');
         let isResizing = false;
@@ -704,7 +700,7 @@
             const newH = Math.max(120, startH + dy);
             gui.style.width = `${newW}px`;
             gui.style.height = `${newH}px`;
-            // persist minWidth to settings as suggested
+
             settings.minWidth = newW;
             document.getElementById('minWidth').value = settings.minWidth;
         });
@@ -718,12 +714,9 @@
         });
     }
 
-    // Convert original buttons and logic from user script into this combined UI.
-    // Keep the original event behaviors but attach to our new DOM nodes by id.
 
-    // Original functionality variables and helper functions (kept)
     function getVisiblePlayers() {
-        // Placeholder — original code suggested a dummy. Keep that behavior unchanged.
+
         return [
             { id: 1, x: 100, y: 200 },
             { id: 2, x: 300, y: 400 }
@@ -742,7 +735,6 @@
         };
     }
 
-    // Tracer implementation (unchanged behaviour)
     document.getElementById('tracersButton').addEventListener('click', function() {
         tracersEnabled = !tracersEnabled;
         showStatus(`Tracers: ${tracersEnabled ? 'Enabled' : 'Disabled'}`);
@@ -752,7 +744,7 @@
     });
 
     function startTrackingPlayers() {
-        // don't duplicate tracers
+
         removeTracers();
         const visiblePlayers = getVisiblePlayers();
         visiblePlayers.forEach(player => {
@@ -798,7 +790,7 @@
         tracerLine.style.top = `${gunPosition.y}px`;
     }
 
-    // Aim helper (unchanged behaviour)
+
     document.getElementById('aimHelperButton').addEventListener('click', function() {
         aimHelperEnabled = !aimHelperEnabled;
         showStatus(`Aim Helper: ${aimHelperEnabled ? 'Enabled' : 'Disabled'}`);
@@ -846,7 +838,7 @@
         }
     }
 
-    // NoDark button
+
     document.getElementById('noDarkButton').addEventListener('click', function() {
         noDarkEnabled = !noDarkEnabled;
         showStatus(`NoDark: ${noDarkEnabled ? 'Enabled' : 'Disabled'}`);
@@ -860,7 +852,6 @@
         this.style.background = noDarkEnabled ? settings.buttonHoverColor : settings.buttonColor;
     });
 
-    // Ping / FPS buttons (unchanged behaviour but link to our displays)
     document.getElementById('pingButton').addEventListener('click', function() {
         pingVisible = !pingVisible;
         showStatus(`Ping: ${pingVisible ? 'Visible' : 'Hidden'}`);
@@ -877,7 +868,7 @@
         if (fpsVisible) updateFPS();
     });
 
-    // Transparency button toggles between two levels (kept original behavior but synced to settings)
+
     document.getElementById('transparencyButton').addEventListener('click', function() {
         settings.bgAlpha = (settings.bgAlpha === 0.8) ? 0.5 : 0.8;
         document.getElementById('bgAlpha').value = settings.bgAlpha;
@@ -887,7 +878,7 @@
         showStatus(`Transparency: ${Math.round(settings.bgAlpha*100)}%`);
     });
 
-    // Data fetch buttons (unchanged)
+
     document.getElementById('playerCountsButton').addEventListener('click', function() {
         showStatus('Fetching Server Player Counts...');
         fetch('https://expandedwater.online:3000/api/messages/1117612925666996254')
@@ -912,17 +903,17 @@
             .catch(error => showStatus(`Error fetching data: ${error}`));
     });
 
-    // Prevent GUI from closing when clicking inside it
+
     gui.addEventListener('click', function(e) { e.stopPropagation(); });
 
-    // Close GUI when clicking outside
+
     document.addEventListener('click', function(e) {
         if (gui.style.display === 'block' && !gui.contains(e.target)) {
             gui.style.display = 'none';
         }
     });
 
-    // Create gun element (unchanged)
+
     function createGunElement() {
         if (!gunElement) {
             gunElement = document.createElement('div');
@@ -934,7 +925,6 @@
     }
     createGunElement();
 
-    // Ping + FPS updates (unchanged dummy behaviors)
     function updatePing() {
         if (pingVisible) {
             const ping = Math.floor(Math.random() * 100);
@@ -950,36 +940,36 @@
         }
     }
 
-    // Keyboard toggle (Z) preserved
+
     document.addEventListener('keydown', function(e) {
         if (e.key.toLowerCase() === 'z') {
             gui.style.display = gui.style.display === 'block' ? 'none' : 'block';
         }
     });
 
-    // Close button
+
     document.getElementById('sigmaClose').addEventListener('click', function() {
         gui.style.display = 'none';
     });
 
-    // Initialize customization wiring + behavior
+ 
     populateControls();
     wireCustomize();
     makeDraggable();
     makeResizable();
     applySettings();
 
-    // Attempt to restore last saved custom left/top if present
+
     if (settings.customLeft && settings.customTop) {
         gui.style.left = settings.customLeft;
         gui.style.top = settings.customTop;
-        gui.style.transform = ''; // ensure position uses left/top
+        gui.style.transform = ''; 
     }
 
-    // Show GUI by default (mirrors previous behavior when pressing Z)
+
     gui.style.display = 'block';
 
-    // Accessibility: expose a function to programmatically open the customize panel (for advanced use)
+
     window.SigmaClient = window.SigmaClient || {};
     window.SigmaClient.openCustomize = function() {
         const panel = document.getElementById('customizePanel');
@@ -987,7 +977,7 @@
         gui.style.display = 'block';
     };
 
-    // Final safety: save settings on unload
+
     window.addEventListener('beforeunload', () => {
         saveSettings(settings);
     });
